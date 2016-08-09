@@ -3,6 +3,7 @@
  *
  * Copyright (c) 2014 robert.gruendler@dubture.com
  *               2016 Maxim Biro <nurupo.contributions@gmail.com>
+ *               2016 Isaac Aymerich <isaac.aymerich@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -61,18 +62,19 @@ import java.util.Arrays;
 
 /**
  * A {@link SlaveTemplate} represents the configuration values for creating a
- * new slave via a Scaleway droplet.
+ * new slave via a Scaleway.
  *
  * <p>
- * Holds things like Image ID, sizeId and region used for the specific droplet.
+ * Holds things like Image ID, sizeId  used for the specific Server.
  *
  * <p>
  * The
  * {@link SlaveTemplate#provision(String, String, String, String, Integer, List<Server>)}
- * method is the main entry point to create a new droplet via the Scaleway API
+ * method is the main entry point to create a new server via the Scaleway API
  * when a new slave needs to be provisioned.
  *
  * @author robert.gruendler@dubture.com
+ * @author isaac.aymerich@gmail.com
  */
 @SuppressWarnings("unused")
 public class SlaveTemplate implements Describable<SlaveTemplate> {
@@ -91,12 +93,12 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
     private final String labels;
 
     /**
-     * The Image to be used for the droplet.
+     * The Image to be used for the server.
      */
     private final String imageId;
 
     /**
-     * The specified droplet sizeId.
+     * The specified server sizeId.
      */
     private final String sizeId;
 
@@ -201,7 +203,7 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
                 throw new AssertionError();
             }
 
-            // create a new droplet
+            // create a new server
             ScalewayServerDefinition serverDefinition = new ScalewayServerDefinition();
             serverDefinition.setName(serverName);
             serverDefinition.setImage(imageId);
@@ -225,7 +227,7 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
     /**
      * Create a new {@link Slave} from the given {@link Server}
      *
-     * @param server the droplet being created
+     * @param server the server being created
      * @param privateKey the RSA private key being used
      * @return the provisioned {@link Slave}
      * @throws IOException

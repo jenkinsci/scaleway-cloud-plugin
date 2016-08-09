@@ -3,6 +3,7 @@
  *
  * Copyright (c) 2014 robert.gruendler@dubture.com
  *               2016 Maxim Biro <nurupo.contributions@gmail.com>
+ *               2016 Isaac Aymerich <isaac.aymerich@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -64,6 +65,7 @@ import static java.lang.String.format;
  * </ul>
  *
  * @author robert.gruendler@dubture.com
+ * @author isaac.aymerich@gmail.com
  */
 public class ComputerLauncher extends hudson.slaves.ComputerLauncher {
 

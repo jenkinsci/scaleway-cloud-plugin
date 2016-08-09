@@ -3,6 +3,7 @@
   ~
   ~ Copyright (c) 2014 robert.gruendler@dubture.com
   ~               2016 Maxim Biro <nurupo.contributions@gmail.com>
+  ~               2016 Isaac Aymerich <isaac.aymerich@gmail.com>
   ~
   ~ Permission is hereby granted, free of charge, to any person obtaining a copy
   ~ of this software and associated documentation files (the "Software"), to deal
@@ -24,15 +25,15 @@
   -->
 
 <div>
-    The private SSH key that will be used by Jenkins to connect to droplets.
+    The private SSH key that will be used by Jenkins to connect to servers.
 
     <P>
     Make sure that the user that Jenkins will try to ssh as (you can specify
-    the user in droplet's settings) has the public key corresponding to this
+    the user in server's settings) has the public key corresponding to this
     private key set in ~/.ssh/authorized_keys file.
 
     <P>
-    If you set droplet's user to be "root", then this key must correspond to the
+    If you set server's user to be "root", then this key must correspond to the
     public SSH key above, as Scaleway will automatically add it to
     /root/.ssh/authorized_keys file.
 </div>

@@ -1,8 +1,9 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2014 robert.gruendler@segator.com
+ * Copyright (c) 2014 robert.gruendler@dubture.com
  *               2016 Maxim Biro <nurupo.contributions@gmail.com>
+ *               2016 Isaac Aymerich <isaac.aymerich@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -29,8 +30,6 @@ import com.google.common.base.Strings;
 import com.segator.scaleway.api.ScalewayClient;
 import com.segator.scaleway.api.ScalewayFactory;
 import com.segator.scaleway.api.entity.ScalewayServer;
-import com.segator.scaleway.api.entity.ScalewayUserKey;
-import com.segator.scaleway.api.entity.exceptions.ScalewayException;
 
 import hudson.Extension;
 import hudson.model.Computer;
@@ -39,7 +38,6 @@ import hudson.model.Label;
 import hudson.model.Node;
 import hudson.slaves.NodeProvisioner;
 import hudson.util.FormValidation;
-import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -63,8 +61,7 @@ import java.util.logging.Logger;
  * The {@link com.segator.jenkins.scaleway.Cloud#provision(hudson.model.Label, int)} method will be called
  * by Jenkins as soon as a new slave needs to be provisioned.
  *
- * The number of
- *
+ * 
  * @author isaac.aymerich@gmail.com
  */
 public class Cloud extends hudson.slaves.Cloud {

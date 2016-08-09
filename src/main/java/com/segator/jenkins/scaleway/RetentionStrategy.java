@@ -3,6 +3,7 @@
  *
  * Copyright (c) 2014 robert.gruendler@dubture.com
  *               2016 Maxim Biro <nurupo.contributions@gmail.com>
+ *               2016 Isaac Aymerich <isaac.aymerich@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -33,9 +34,10 @@ import hudson.util.TimeUnit2;
 /**
  *
  * The {@link RetentionStrategy} is mainly used to determine
- * when an idle {@link Droplet} can be destroyed.
+ * when an idle Server can be destroyed.
  *
  * @author robert.gruendler@dubture.com
+ * @author isaac.aymerich@gmail.com
  */
 public class RetentionStrategy extends CloudSlaveRetentionStrategy<Computer> {
 

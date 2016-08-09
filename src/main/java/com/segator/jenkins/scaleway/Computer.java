@@ -3,6 +3,7 @@
  *
  * Copyright (c) 2014 robert.gruendler@dubture.com
  *               2016 Maxim Biro <nurupo.contributions@gmail.com>
+ *               2016 Isaac Aymerich <isaac.aymerich@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -37,9 +38,10 @@ import java.util.logging.Logger;
  *
  * A {@link hudson.model.Computer} implementation for Scaleway. Holds a handle to an {@link Slave}.
  *
- * <p>Mainly responsible for updating the {@link Droplet} information via {@link Computer#updateInstanceDescription()}
+ * <p>Mainly responsible for updating the Server information via {@link Computer#updateInstanceDescription()}
  *
  * @author robert.gruendler@dubture.com
+ * @author isaac.aymerich@gmail.com
  */
 public class Computer extends AbstractCloudComputer<Slave> {
 

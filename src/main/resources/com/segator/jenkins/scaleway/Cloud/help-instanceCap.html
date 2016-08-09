@@ -3,6 +3,7 @@
   ~
   ~ Copyright (c) 2014 robert.gruendler@dubture.com
   ~               2016 Maxim Biro <nurupo.contributions@gmail.com>
+  ~               2016 Isaac Aymerich <isaac.aymerich@gmail.com>
   ~
   ~ Permission is hereby granted, free of charge, to any person obtaining a copy
   ~ of this software and associated documentation files (the "Software"), to deal
@@ -24,14 +25,14 @@
   -->
 
 <div>
-    You can place the upward limit to the number of Scaleway droplets that
+    You can place the upward limit to the number of Scaleway servers that
     Jenkins may launch for this particular Cloud. A cloud is identified by
     "Unique name" field.
     This is useful for avoiding surprises in the billing statement.
 
     <P>
     For example, if this field is 3, Jenkins will only launch a new instance as
-    long as total number of droplets associated with this Cloud on Scaleway
+    long as total number of servers associated with this Cloud on Scaleway
     doesn't exceed this number. In this way, even in the worst case of Jenkins
     starting instances and forgetting about them, you have an upper bound in
     the number of instances that are concurrently executed.

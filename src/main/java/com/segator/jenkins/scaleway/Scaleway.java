@@ -2,7 +2,7 @@
  * The MIT License (MIT)
  *
  * Copyright (c) 2015 Rory Hunter (rory.hunter@blackpepper.co.uk)
- *               2016 Maxim Biro <nurupo.contributions@gmail.com>
+ *               2016 Maxim Biro <nurupo.contributions@gmail.com>\n 2016 Isaac Aymerich <isaac.aymerich@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -39,6 +39,7 @@ import java.util.logging.Logger;
  * return a single result set.
  *
  * @author Rory Hunter (rory.hunter@blackpepper.co.uk)
+ * @author isaac.aymerich@gmail.com
  */
 public final class Scaleway {
 
@@ -65,9 +66,9 @@ public final class Scaleway {
     private static final List<DestroyInfo> toBeDestroyedServers = new ArrayList<DestroyInfo>();
 
     // sometimes servers have pending events during which you can't destroy them.
-    // one of such events in spinning up a new droplet. so we continiously try to
-    // destroy droplets in a separate thread
-    private static final Thread dropletDestroyer = new Thread(new Runnable() {
+    // one of such events in spinning up a new Server. so we continiously try to
+    // destroy servers in a separate thread
+    private static final Thread serverDestroyer = new Thread(new Runnable() {
         @Override
         public void run() {
 
@@ -85,17 +86,17 @@ public final class Scaleway {
                         if (di.authToken != previousAuthToken) {
                             previousAuthToken = di.authToken;
                             client = ScalewayFactory.getScalewayClient(di.authToken,di.orgToken);
-                            // new auth token -- new list of droplets
+                            // new auth token -- new list of servers
                             servers = null;
                         }
 
                         try {
-                            LOGGER.info("Trying to destroy droplet " + di.serverId);
+                            LOGGER.info("Trying to destroy server " + di.serverId);
                             client.executeServerAction(di.serverId,ScalewayServerAction.TERMINATE);
                             LOGGER.info("Server " + di.serverId + " is destroyed");
                             it.remove();
                         } catch (Exception e) {
-                            // check if such droplet even exist in the first place
+                            // check if such server even exist in the first place
                             if (servers == null) {
                                 try {
                                     servers = client.getAllServers();
@@ -119,7 +120,7 @@ public final class Scaleway {
                                     continue;
                                 }
                             }
-                            // such droplet might exist, so let's retry later
+                            // such server might exist, so let's retry later
                             failedToDestroy = true;
                             LOGGER.warning("Failed to destroy server " + di.serverId);
                             LOGGER.log(Level.WARNING, e.getMessage(), e);
@@ -127,7 +128,7 @@ public final class Scaleway {
                     }
 
                     if (failedToDestroy) {
-                        LOGGER.info("Retrying to destroy the droplets in about 10 seconds");
+                        LOGGER.info("Retrying to destroy the servers in about 10 seconds");
                         try {
                             // sleep for 10 seconds, but wake up earlier if notified
                             toBeDestroyedServers.wait(10000);
@@ -135,7 +136,7 @@ public final class Scaleway {
                             // ignore
                         }
                     } else {
-                        LOGGER.info("Waiting on more droplets to destroy");
+                        LOGGER.info("Waiting on more servers to destroy");
                         while (toBeDestroyedServers.isEmpty()) {
                             try {
                                 toBeDestroyedServers.wait();
@@ -151,7 +152,7 @@ public final class Scaleway {
 
     static void tryDestroyServerAsync(final String authToken,final String orgToken, final String serverId) {
         synchronized (toBeDestroyedServers) {
-            LOGGER.info("Adding droplet to destroy " + serverId);
+            LOGGER.info("Adding server to destroy " + serverId);
 
             toBeDestroyedServers.add(new DestroyInfo(authToken,orgToken, serverId));
 
@@ -165,8 +166,8 @@ public final class Scaleway {
 
             toBeDestroyedServers.notifyAll();
 
-            if (!dropletDestroyer.isAlive()) {
-                dropletDestroyer.start();
+            if (!serverDestroyer.isAlive()) {
+                serverDestroyer.start();
             }
         }
     }
