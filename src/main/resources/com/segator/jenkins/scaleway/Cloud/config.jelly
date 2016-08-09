@@ -1,0 +1,61 @@
+<!--
+  ~ The MIT License (MIT)
+  ~
+  ~ Copyright (c) 2014 robert.gruendler@dubture.com
+  ~               2016 Maxim Biro <nurupo.contributions@gmail.com>
+  ~
+  ~ Permission is hereby granted, free of charge, to any person obtaining a copy
+  ~ of this software and associated documentation files (the "Software"), to deal
+  ~ in the Software without restriction, including without limitation the rights
+  ~ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  ~ copies of the Software, and to permit persons to whom the Software is
+  ~ furnished to do so, subject to the following conditions:
+  ~
+  ~ The above copyright notice and this permission notice shall be included in
+  ~ all copies or substantial portions of the Software.
+  ~
+  ~ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  ~ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  ~ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  ~ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  ~ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+  ~ THE SOFTWARE.
+  -->
+
+<?jelly escape-by-default='true'?>
+
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+
+    <f:entry title="Unique name" field="name">
+        <f:textbox/>
+    </f:entry>
+
+    <f:entry title="Auth token" >
+        <f:password field="authToken" />
+    </f:entry>
+    <f:entry title="Org token" >
+        <f:password field="orgToken" />
+    </f:entry>
+
+    <f:entry title="SSH private key" field="privateKey">
+        <f:textarea/>
+    </f:entry>
+
+    <f:entry title="Instance cap" field="instanceCap">
+        <f:textbox default="5"/>
+    </f:entry>
+
+    <f:entry title="Timeout in minutes" field="timeoutMinutes">
+        <f:textbox default="5"/>
+    </f:entry>
+
+    <f:validateButton title="Test connection" progress="Testing API connectivity..." method="testConnection" with="authToken,orgToken"/>
+
+    <f:entry title="Server Definitions" description="List of Servers Definitions which can be launched as slaves">
+        <f:repeatable field="templates">
+            <st:include page="/com/segator/jenkins/scaleway/SlaveTemplate/config.jelly" class="com.segator.jenkins.scaleway.SlaveTemplate$DescriptorImpl"/>
+        </f:repeatable>
+    </f:entry>
+
+</j:jelly>
