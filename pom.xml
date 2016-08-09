@@ -23,9 +23,9 @@
     </developers>
 
     <scm>
-        <connection>scm:git:ssh://github.com/segator/scaleway-plugin.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/segator/scaleway-plugin.git</developerConnection>
-        <url>https://github.com/segator/scaleway-plugin</url>
+        <connection>scm:git:ssh://github.com/segator/jenkins-scaleway-cloud-plugin.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/segator/jenkins-scaleway-cloud-plugin.git</developerConnection>
+        <url>https://github.com/segator/jenkins-scaleway-cloud-plugin</url>
         <tag>HEAD</tag>
     </scm>
 
