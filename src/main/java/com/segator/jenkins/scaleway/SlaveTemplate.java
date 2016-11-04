@@ -68,8 +68,7 @@ import java.util.Arrays;
  * Holds things like Image ID, sizeId  used for the specific Server.
  *
  * <p>
- * The
- * {@link SlaveTemplate#provision(String, String, String, String, Integer, List<Server>)}
+ * The SlaveTemplate
  * method is the main entry point to create a new server via the Scaleway API
  * when a new slave needs to be provisioned.
  *

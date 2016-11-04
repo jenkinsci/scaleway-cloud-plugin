@@ -109,7 +109,7 @@ public class Cloud extends hudson.slaves.Cloud {
      * @param orgToken A Scaleway Organzation Token
      * @param privateKey An RSA private key in text format
      * @param instanceCap the maximum number of instances that can be started
-     * @param timeoutMinutes
+     * @param timeoutMinutes timeout in minutes
      * @param templates the templates for this cloud
      */
     @DataBoundConstructor
@@ -195,9 +195,9 @@ public class Cloud extends hudson.slaves.Cloud {
     /**
      * The actual logic for provisioning a new server when it's needed by Jenkins.
      *
-     * @param label
-     * @param excessWorkload
-     * @return
+     * @param label slave label
+     * @param excessWorkload  excess workload
+     * @return List Planned Nodes
      */
     @Override
     public Collection<NodeProvisioner.PlannedNode> provision(final Label label, int excessWorkload) {
