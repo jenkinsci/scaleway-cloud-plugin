@@ -24,7 +24,7 @@
  * THE SOFTWARE.
  */
 
-package com.segator.jenkins.scaleway;
+package com.github.segator.jenkins.scaleway;
 
 
 import hudson.model.Descriptor;
@@ -59,7 +59,11 @@ public class RetentionStrategy extends CloudSlaveRetentionStrategy<Computer> {
 
     @Override
     protected boolean isIdleForTooLong(Computer computer) {
-        int idleTerminationTime = computer.getNode().getIdleTerminationTime();
+        int idleTerminationTime = 0;
+        Slave node = computer.getNode();
+        if(node!=null){            
+            idleTerminationTime = node.getIdleTerminationTime();
+        }
 
         if (idleTerminationTime == 0) {
             return false;

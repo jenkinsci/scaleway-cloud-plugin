@@ -23,8 +23,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
-package com.segator.jenkins.scaleway;
+package com.github.segator.jenkins.scaleway;
 
 import hudson.Extension;
 import hudson.model.Descriptor;
@@ -41,10 +40,11 @@ import java.util.logging.Logger;
 
 /**
  *
- * The {@link com.segator.jenkins.scaleway.Slave} is responsible for
+ * The {@link com.github.segator.jenkins.scaleway.Slave} is responsible for
  *
  * <ul>
- *   <li>Creating a Scaleway {@link com.segator.jenkins.scaleway.Computer}</li>
+ * <li>Creating a Scaleway
+ * {@link com.github.segator.jenkins.scaleway.Computer}</li>
  * </ul>
  *
  * @author robert.gruendler@dubture.com
@@ -72,11 +72,10 @@ public class Slave extends AbstractCloudSlave {
 
     private final int sshPort;
 
-    
     public Slave(String cloudName, String name, String nodeDescription, String serverId, String privateKey,
-                 String remoteAdmin, String remoteFS, int sshPort, int numExecutors, int idleTerminationTime,
-                 Mode mode, String labelString, ComputerLauncher launcher, RetentionStrategy retentionStrategy,
-                 List<? extends NodeProperty<?>> nodeProperties, String initScript, String jvmOpts)
+            String remoteAdmin, String remoteFS, int sshPort, int numExecutors, int idleTerminationTime,
+            Mode mode, String labelString, ComputerLauncher launcher, RetentionStrategy retentionStrategy,
+            List<? extends NodeProperty<?>> nodeProperties, String initScript, String jvmOpts)
             throws Descriptor.FormException, IOException {
 
         super(name, nodeDescription, remoteFS, numExecutors, mode, labelString, launcher, retentionStrategy, nodeProperties);
@@ -107,7 +106,9 @@ public class Slave extends AbstractCloudSlave {
     }
 
     /**
-     * Override to create a Scaleway {@link com.segator.jenkins.scaleway.Computer}
+     * Override to create a Scaleway
+     * {@link com.github.segator.jenkins.scaleway.Computer}
+     *
      * @return a new Computer instance, instantiated with this Slave instance.
      */
     @Override
@@ -116,20 +117,28 @@ public class Slave extends AbstractCloudSlave {
     }
 
     /**
-     * Retrieve a handle to the associated {@link com.segator.jenkins.scaleway.Cloud}
-     * @return the Cloud associated with the specified cloudName
+     * Retrieve a handle to the associated
+     * {@link com.github.segator.jenkins.scaleway.ScalewayCloud}
+     *
+     * @return the ScalewayCloud associated with the specified cloudName
      */
-    public Cloud getCloud() {
-        return (Cloud) Jenkins.getInstance().getCloud(cloudName);
+    public ScalewayCloud getCloud() {
+        Jenkins instance = Jenkins.getInstance();
+        if (instance != null) {
+            return (ScalewayCloud) instance.getCloud(cloudName);
+        }
+        return null;
     }
 
     /**
      * Get the name of the remote admin user
+     *
      * @return the remote admin user, defaulting to "root"
      */
     public String getRemoteAdmin() {
-        if (remoteAdmin == null || remoteAdmin.length() == 0)
+        if (remoteAdmin == null || remoteAdmin.length() == 0) {
             return "root";
+        }
         return remoteAdmin;
     }
 
@@ -142,7 +151,7 @@ public class Slave extends AbstractCloudSlave {
      */
     @Override
     protected void _terminate(TaskListener listener) throws IOException, InterruptedException {
-        Scaleway.tryDestroyServerAsync(getCloud().getAuthToken(),getCloud().getOrgToken(), serverId);
+        Scaleway.tryDestroyServerAsync(getCloud().getAuthToken(), getCloud().getOrgToken(), serverId);
     }
 
     public long getStartTimeMillis() {

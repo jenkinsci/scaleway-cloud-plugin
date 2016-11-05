@@ -55,7 +55,7 @@
 
     <f:entry title="Server Definitions" description="List of Servers Definitions which can be launched as slaves">
         <f:repeatable field="templates">
-            <st:include page="/com/segator/jenkins/scaleway/SlaveTemplate/config.jelly" class="com.segator.jenkins.scaleway.SlaveTemplate$DescriptorImpl"/>
+            <st:include page="/com/segator/jenkins/scaleway/SlaveTemplate/config.jelly" class="com.github.segator.jenkins.scaleway.SlaveTemplate$DescriptorImpl"/>
         </f:repeatable>
     </f:entry>
 

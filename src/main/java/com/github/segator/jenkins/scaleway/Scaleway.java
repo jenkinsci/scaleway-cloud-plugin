@@ -23,12 +23,12 @@
  * THE SOFTWARE.
  */
 
-package com.segator.jenkins.scaleway;
+package com.github.segator.jenkins.scaleway;
 
-import com.segator.scaleway.api.ScalewayClient;
-import com.segator.scaleway.api.ScalewayFactory;
-import com.segator.scaleway.api.entity.ScalewayServer;
-import com.segator.scaleway.api.entity.ScalewayServerAction;
+import com.github.segator.scaleway.api.ScalewayClient;
+import com.github.segator.scaleway.api.ScalewayFactory;
+import com.github.segator.scaleway.api.entity.ScalewayServer;
+import com.github.segator.scaleway.api.entity.ScalewayServerAction;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;

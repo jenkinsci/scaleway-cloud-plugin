@@ -23,13 +23,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
-package com.segator.jenkins.scaleway;
+package com.github.segator.jenkins.scaleway;
 
 import com.google.common.base.Strings;
-import com.segator.scaleway.api.ScalewayClient;
-import com.segator.scaleway.api.ScalewayFactory;
-import com.segator.scaleway.api.entity.ScalewayServer;
+import com.github.segator.scaleway.api.ScalewayClient;
+import com.github.segator.scaleway.api.ScalewayFactory;
+import com.github.segator.scaleway.api.entity.ScalewayServer;
 
 import hudson.Extension;
 import hudson.model.Computer;
@@ -55,23 +54,27 @@ import java.util.logging.Logger;
 
 /**
  *
- * The {@link com.segator.jenkins.scaleway.Cloud} contains the main configuration values for running
- slaves on Scaleway, e.g. apiKey/clientId to connect to the API.
+ * The {@link com.github.segator.jenkins.scaleway.ScalewayCloud} contains the
+ * main configuration values for running slaves on Scaleway, e.g.
+ * apiKey/clientId to connect to the API.
  *
- * The {@link com.segator.jenkins.scaleway.Cloud#provision(hudson.model.Label, int)} method will be called
- * by Jenkins as soon as a new slave needs to be provisioned.
+ * The
+ * {@link com.github.segator.jenkins.scaleway.ScalewayCloud#provision(hudson.model.Label, int)}
+ * method will be called by Jenkins as soon as a new slave needs to be
+ * provisioned.
  *
- * 
+ *
  * @author isaac.aymerich@gmail.com
  */
-public class Cloud extends hudson.slaves.Cloud {
+public class ScalewayCloud extends hudson.slaves.Cloud {
+
     /**
      * The Scaleway API auth token
+     *
      * @see "https://developers.scaleway.com/documentation/v2/#authentication"
      */
     private final String authToken;
     private final String orgToken;
-
 
     /**
      * The SSH private key associated with the selected SSH key
@@ -83,29 +86,34 @@ public class Cloud extends hudson.slaves.Cloud {
     private final Integer timeoutMinutes;
 
     /**
-     * List of {@link com.segator.jenkins.scaleway.SlaveTemplate}
+     * List of {@link com.github.segator.jenkins.scaleway.SlaveTemplate}
      */
     private final List<? extends SlaveTemplate> templates;
 
-    private static final Logger LOGGER = Logger.getLogger(Cloud.class.getName());
-    
+    private static final Logger LOGGER = Logger.getLogger(ScalewayCloud.class.getName());
+
     private final ScalewayClient scaleway;
 
     /**
-     * Sometimes nodes can be provisioned very fast (or in parallel), leading to more nodes being
- provisioned than the instance cap allows, as they all check Scaleway at about the same time
- right before provisioning and see that instance cap was not reached yet. So, for example, there
-     * might be a situation where 2 nodes see that 1 more node can be provisioned before the instance cap
-     * is reached, and they both happily provision, making one more node being provisioned than the instance
-     * cap allows. Thus we need a synchronization, so that only one node at a time could be provisioned, to
+     * Sometimes nodes can be provisioned very fast (or in parallel), leading to
+     * more nodes being provisioned than the instance cap allows, as they all
+     * check Scaleway at about the same time right before provisioning and see
+     * that instance cap was not reached yet. So, for example, there might be a
+     * situation where 2 nodes see that 1 more node can be provisioned before
+     * the instance cap is reached, and they both happily provision, making one
+     * more node being provisioned than the instance cap allows. Thus we need a
+     * synchronization, so that only one node at a time could be provisioned, to
      * remove the race condition.
      */
     private static final Object provisionSynchronizor = new Object();
 
     /**
-     * Constructor parameters are injected via jelly in the jenkins global configuration
+     * Constructor parameters are injected via jelly in the jenkins global
+     * configuration
+     *
      * @param name A name associated with this cloud configuration
-     * @param authToken A Scaleway API authentication token, generated on their website.
+     * @param authToken A Scaleway API authentication token, generated on their
+     * website.
      * @param orgToken A Scaleway Organzation Token
      * @param privateKey An RSA private key in text format
      * @param instanceCap the maximum number of instances that can be started
@@ -113,7 +121,7 @@ public class Cloud extends hudson.slaves.Cloud {
      * @param templates the templates for this cloud
      */
     @DataBoundConstructor
-    public Cloud(String name,
+    public ScalewayCloud(String name,
             String authToken,
             String orgToken,
             String privateKey,
@@ -125,8 +133,8 @@ public class Cloud extends hudson.slaves.Cloud {
         LOGGER.log(Level.INFO, "Constructing new Cloud(name = {0}, <token>, <privateKey>, <keyId>, instanceCap = {1}, ...)", new Object[]{name, instanceCap});
 
         this.authToken = authToken;
-        this.orgToken =orgToken;
-        this.privateKey = privateKey; 
+        this.orgToken = orgToken;
+        this.privateKey = privateKey;
         this.instanceCap = Integer.parseInt(instanceCap);
         this.timeoutMinutes = timeoutMinutes == null || timeoutMinutes.isEmpty() ? 5 : Integer.parseInt(timeoutMinutes);
 
@@ -135,7 +143,7 @@ public class Cloud extends hudson.slaves.Cloud {
         } else {
             this.templates = templates;
         }
-        scaleway= ScalewayFactory.getScalewayClient(authToken, orgToken);
+        scaleway = ScalewayFactory.getScalewayClient(authToken, orgToken);
 
         LOGGER.info("Creating Scaleway cloud with " + this.templates.size() + " templates");
     }
@@ -149,10 +157,15 @@ public class Cloud extends hudson.slaves.Cloud {
 
         LOGGER.log(Level.INFO, "cloud limit check");
 
-        List<Node> nodes = Jenkins.getInstance().getNodes();
+        List<Node> nodes = new ArrayList();
+        Jenkins instance = Jenkins.getInstance();
+        if (instance != null) {
+            nodes = instance.getNodes();
+        }
+
         for (Node n : nodes) {
             if (ScalewayServerName.isServerInstanceOfCloud(n.getDisplayName(), name)) {
-                count ++;
+                count++;
             }
         }
 
@@ -193,10 +206,11 @@ public class Cloud extends hudson.slaves.Cloud {
     }
 
     /**
-     * The actual logic for provisioning a new server when it's needed by Jenkins.
+     * The actual logic for provisioning a new server when it's needed by
+     * Jenkins.
      *
      * @param label slave label
-     * @param excessWorkload  excess workload
+     * @param excessWorkload excess workload
      * @return List Planned Nodes
      */
     @Override
@@ -230,10 +244,17 @@ public class Cloud extends hudson.slaves.Cloud {
                                     LOGGER.log(Level.INFO, "Instance cap reached, not provisioning.");
                                     return null;
                                 }
-                                slave = template.provision(serverName, name, authToken,orgToken,privateKey, servers);
+                                slave = template.provision(serverName, name, authToken, orgToken, privateKey, servers);
                             }
-                            Jenkins.getInstance().addNode(slave);
-                            slave.toComputer().connect(false).get();
+                            Jenkins instance = Jenkins.getInstance();
+                            if (instance != null) {
+                                instance.addNode(slave);
+                            }
+                            Computer slaveComputer = slave.toComputer();
+                            if (slaveComputer != null) {
+                                slaveComputer.connect(false).get();
+                            }
+
                             return slave;
                         }
                     }), template.getNumExecutors()));
@@ -277,11 +298,13 @@ public class Cloud extends hudson.slaves.Cloud {
         List<SlaveTemplate> matchingTemplates = new ArrayList<SlaveTemplate>();
 
         for (SlaveTemplate t : templates) {
-            if (label == null && t.getLabelSet().size() != 0) {
+            if (label == null && !t.getLabelSet().isEmpty()) {
                 continue;
             }
-            if ((label == null && t.getLabelSet().size() == 0) || label.matches(t.getLabelSet())) {
-                matchingTemplates.add(t);
+            if (t.getLabelSet() != null) {
+                if ((label == null && t.getLabelSet().isEmpty()) || label!=null && label.matches(t.getLabelSet())) {
+                    matchingTemplates.add(t);
+                }
             }
         }
 
@@ -332,7 +355,6 @@ public class Cloud extends hudson.slaves.Cloud {
         return privateKey;
     }
 
-
     public int getInstanceCap() {
         return instanceCap;
     }
@@ -356,7 +378,7 @@ public class Cloud extends hudson.slaves.Cloud {
             return "Scaleway";
         }
 
-        public FormValidation doTestConnection(@QueryParameter("authToken") final String authToken,@QueryParameter("orgToken") final String orgToken) {
+        public FormValidation doTestConnection(@QueryParameter("authToken") final String authToken, @QueryParameter("orgToken") final String orgToken) {
             try {
                 ScalewayClient client = ScalewayFactory.getScalewayClient(authToken, authToken);
                 client.getAllOrganizations();
@@ -386,22 +408,25 @@ public class Cloud extends hudson.slaves.Cloud {
         }
 
         public FormValidation doCheckPrivateKey(@QueryParameter String value) throws IOException {
-            boolean hasStart=false,hasEnd=false;
+            boolean hasStart = false, hasEnd = false;
             BufferedReader br = new BufferedReader(new StringReader(value));
             String line;
             while ((line = br.readLine()) != null) {
-                if (line.equals("-----BEGIN RSA PRIVATE KEY-----"))
-                    hasStart=true;
-                if (line.equals("-----END RSA PRIVATE KEY-----"))
-                    hasEnd=true;
+                if (line.equals("-----BEGIN RSA PRIVATE KEY-----")) {
+                    hasStart = true;
+                }
+                if (line.equals("-----END RSA PRIVATE KEY-----")) {
+                    hasEnd = true;
+                }
             }
-            if(!hasStart)
+            if (!hasStart) {
                 return FormValidation.error("This doesn't look like a private key at all");
-            if(!hasEnd)
+            }
+            if (!hasEnd) {
                 return FormValidation.error("The private key is missing the trailing 'END RSA PRIVATE KEY' marker. Copy&paste error?");
+            }
             return FormValidation.ok();
         }
-
 
         public FormValidation doCheckInstanceCap(@QueryParameter String instanceCap) {
             if (Strings.isNullOrEmpty(instanceCap)) {
@@ -426,5 +451,5 @@ public class Cloud extends hudson.slaves.Cloud {
 
     public String getOrgToken() {
         return orgToken;
-    }    
+    }
 }

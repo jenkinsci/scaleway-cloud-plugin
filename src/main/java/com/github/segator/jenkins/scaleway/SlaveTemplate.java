@@ -23,7 +23,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.segator.jenkins.scaleway;
+package com.github.segator.jenkins.scaleway;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -50,14 +50,15 @@ import jenkins.model.Jenkins;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
-import com.segator.scaleway.api.entity.ScalewayServer;
-import com.segator.scaleway.api.ScalewayClient;
-import com.segator.scaleway.api.ScalewayFactory;
-import com.segator.scaleway.api.entity.ScalewayCommercialType;
-import com.segator.scaleway.api.entity.ScalewayImage;
-import com.segator.scaleway.api.entity.ScalewayServerAction;
-import com.segator.scaleway.api.entity.ScalewayServerDefinition;
-import com.segator.scaleway.api.entity.ScalewayState;
+import com.github.segator.scaleway.api.entity.ScalewayServer;
+import com.github.segator.scaleway.api.ScalewayClient;
+import com.github.segator.scaleway.api.ScalewayFactory;
+import com.github.segator.scaleway.api.entity.ScalewayCommercialType;
+import com.github.segator.scaleway.api.entity.ScalewayImage;
+import com.github.segator.scaleway.api.entity.ScalewayServerAction;
+import com.github.segator.scaleway.api.entity.ScalewayServerDefinition;
+import com.github.segator.scaleway.api.entity.ScalewayState;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
@@ -65,12 +66,11 @@ import java.util.Arrays;
  * new slave via a Scaleway.
  *
  * <p>
- * Holds things like Image ID, sizeId  used for the specific Server.
+ * Holds things like Image ID, sizeId used for the specific Server.
  *
  * <p>
- * The SlaveTemplate
- * method is the main entry point to create a new server via the Scaleway API
- * when a new slave needs to be provisioned.
+ * The SlaveTemplate method is the main entry point to create a new server via
+ * the Scaleway API when a new slave needs to be provisioned.
  *
  * @author robert.gruendler@dubture.com
  * @author isaac.aymerich@gmail.com
@@ -100,7 +100,6 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
      * The specified server sizeId.
      */
     private final String sizeId;
-
 
     private final String username;
 
@@ -159,13 +158,18 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
     }
 
     public boolean isInstanceCapReachedLocal(String cloudName) {
+          Jenkins instance = Jenkins.getInstance();
+        
         if (instanceCap == 0) {
             return false;
         }
         LOGGER.log(Level.INFO, "slave limit check");
 
         int count = 0;
-        List<Node> nodes = Jenkins.getInstance().getNodes();
+        List<Node> nodes = new ArrayList();
+        if (instance != null){
+            nodes = instance.getNodes();
+        }
         for (Node n : nodes) {
             if (ScalewayServerName.isServerInstanceOfSlave(n.getDisplayName(), cloudName, name)) {
                 count++;
@@ -211,7 +215,6 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
             serverDefinition.setTags(Arrays.asList("jenkins-slave"));
             serverDefinition.setCommercialType(ScalewayCommercialType.C2S);
 
-
             LOGGER.log(Level.INFO, "Creating slave with new server " + serverName);
 
             ScalewayServer createdServer = scaleway.createServer(serverDefinition);
@@ -247,7 +250,7 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
                 idleTerminationInMinutes,
                 Node.Mode.NORMAL,
                 labels,
-                new ComputerLauncher(),
+                new ScalewayComputerLauncher(),
                 new RetentionStrategy(),
                 Collections.<NodeProperty<?>>emptyList(),
                 Util.fixNull(initScript),
@@ -260,7 +263,7 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
 
         @Override
         public String getDisplayName() {
-            return null;
+            return "Slave Template";
         }
 
         public FormValidation doCheckName(@QueryParameter String name) {
@@ -337,10 +340,9 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
             if (Strings.isNullOrEmpty(idleTerminationInMinutes)) {
                 return FormValidation.error("Must be set");
             } else {
-                int number;
 
                 try {
-                    number = Integer.parseInt(idleTerminationInMinutes);
+                    Integer.parseInt(idleTerminationInMinutes);
                 } catch (Exception e) {
                     return FormValidation.error("Must be a number");
                 }
@@ -354,15 +356,15 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
         }
 
         public FormValidation doCheckSizeId(@RelativePath("..") @QueryParameter String authToken) {
-            return Cloud.DescriptorImpl.doCheckAuthToken(authToken);
+            return ScalewayCloud.DescriptorImpl.doCheckAuthToken(authToken);
         }
 
         public FormValidation doCheckImageId(@RelativePath("..") @QueryParameter String authToken) {
-            return Cloud.DescriptorImpl.doCheckAuthToken(authToken);
+            return ScalewayCloud.DescriptorImpl.doCheckAuthToken(authToken);
         }
 
         public FormValidation doCheckRegionId(@RelativePath("..") @QueryParameter String authToken) {
-            return Cloud.DescriptorImpl.doCheckAuthToken(authToken);
+            return ScalewayCloud.DescriptorImpl.doCheckAuthToken(authToken);
         }
 
         public ListBoxModel doFillSizeIdItems() throws Exception {
@@ -382,17 +384,21 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
             ListBoxModel model = new ListBoxModel();
             List<ScalewayImage> images = scaleway.getAllImages();
             for (ScalewayImage image : images) {
-                model.add(image.getName() + "(" + image.getArch() + ")",image.getId());
+                model.add(image.getName() + "(" + image.getArch() + ")", image.getId());
             }
 
             return model;
         }
- 
+
     }
 
     @SuppressWarnings("unchecked")
     public Descriptor<SlaveTemplate> getDescriptor() {
-        return Jenkins.getInstance().getDescriptor(getClass());
+        Jenkins instance = Jenkins.getInstance();
+        if (instance != null) {
+            return instance.getDescriptor(getClass());
+        }
+        return null;
     }
 
     public String getName() {
@@ -402,8 +408,6 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
     public String getSizeId() {
         return sizeId;
     }
-
-
 
     public String getLabels() {
         return labels;

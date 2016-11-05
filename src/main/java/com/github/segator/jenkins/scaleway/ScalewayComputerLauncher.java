@@ -23,13 +23,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.segator.jenkins.scaleway;
+package com.github.segator.jenkins.scaleway;
 
 import com.google.common.base.Strings;
-import com.segator.scaleway.api.ScalewayClient;
-import com.segator.scaleway.api.ScalewayFactory;
-import com.segator.scaleway.api.entity.ScalewayServer;
-import com.segator.scaleway.api.entity.exceptions.ScalewayException;
+import com.github.segator.scaleway.api.ScalewayClient;
+import com.github.segator.scaleway.api.ScalewayFactory;
+import com.github.segator.scaleway.api.entity.ScalewayServer;
+import com.github.segator.scaleway.api.entity.exceptions.ScalewayException;
 import com.trilead.ssh2.Connection;
 import com.trilead.ssh2.SCPClient;
 import com.trilead.ssh2.Session;
@@ -57,7 +57,7 @@ import java.util.logging.Logger;
 import static java.lang.String.format;
 
 /**
- * The {@link ComputerLauncher} is responsible for:
+ * The {@link ScalewayComputerLauncher} is responsible for:
  *
  * <ul>
  * <li>Connecting to a slave via SSH</li>
@@ -67,9 +67,9 @@ import static java.lang.String.format;
  * @author robert.gruendler@dubture.com
  * @author isaac.aymerich@gmail.com
  */
-public class ComputerLauncher extends hudson.slaves.ComputerLauncher {
+public class ScalewayComputerLauncher extends hudson.slaves.ComputerLauncher {
 
-    private static final Logger LOGGER = Logger.getLogger(Cloud.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(ScalewayCloud.class.getName());
 
     private static abstract class JavaInstaller {
 
@@ -141,105 +141,115 @@ public class ComputerLauncher extends hudson.slaves.ComputerLauncher {
      */
     @Override
     public void launch(SlaveComputer _computer, TaskListener listener) {
+        Jenkins instance = Jenkins.getInstance();
+        if (_computer instanceof Computer && instance != null) {
+            Computer computer = (Computer) _computer;
 
-        Computer computer = (Computer) _computer;
-        PrintStream logger = listener.getLogger();
+            PrintStream logger = listener.getLogger();
 
-        Date startDate = new Date();
-        logger.println("Start time: " + getUtcDate(startDate));
+            Date startDate = new Date();
+            logger.println("Start time: " + getUtcDate(startDate));
 
-        final Connection conn;
-        Connection cleanupConn = null;
-        boolean successful = false;
+            final Connection conn;
+            Connection cleanupConn = null;
+            boolean successful = false;
+            Slave slave = computer.getNode();
+            if (slave != null) {
+                try {
+                    conn = connectToSsh(computer, logger);
 
-        try {
-            conn = connectToSsh(computer, logger);
-            cleanupConn = conn;
-            logger.println("Authenticating as " + computer.getRemoteAdmin());
-            if (!conn.authenticateWithPublicKey(computer.getRemoteAdmin(), computer.getNode().getPrivateKey().toCharArray(), "")) {
-                logger.println("Authentication failed");
-                throw new Exception("Authentication failed");
-            }
+                    cleanupConn = conn;
 
-            final SCPClient scp = conn.createSCPClient();
+                    if (conn != null) {
+                        logger.println("Authenticating as " + computer.getRemoteAdmin());
+                        if (!conn.authenticateWithPublicKey(computer.getRemoteAdmin(), slave.getPrivateKey().toCharArray(), "")) {
+                            logger.println("Authentication failed");
+                            throw new Exception("Authentication failed");
+                        }
 
-            if (!runInitScript(computer, logger, conn, scp)) {
-                return;
-            }
+                        final SCPClient scp = conn.createSCPClient();
 
-            if (!installJava(logger, conn)) {
-                return;
-            }
+                        if (!runInitScript(computer, logger, conn, scp)) {
+                            return;
+                        }
 
-            logger.println("Copying slave.jar");
-            scp.put(Jenkins.getInstance().getJnlpJars("slave.jar").readFully(), "slave.jar", "/tmp");
-            String jvmOpts = Util.fixNull(computer.getNode().getJvmOpts());
-            String launchString = "java " + jvmOpts + " -jar /tmp/slave.jar";
-            logger.println("Launching slave agent: " + launchString);
-            final Session sess = conn.openSession();
-            sess.execCommand(launchString);
-            computer.setChannel(sess.getStdout(), sess.getStdin(), logger, new Channel.Listener() {
-                @Override
-                public void onClosed(Channel channel, IOException cause) {
-                    sess.close();
-                    conn.close();
+                        if (!installJava(logger, conn)) {
+                            return;
+                        }
+
+                        logger.println("Copying slave.jar");
+                        scp.put(instance.getJnlpJars("slave.jar").readFully(), "slave.jar", "/tmp");
+                        String jvmOpts = Util.fixNull(slave.getJvmOpts());
+                        String launchString = "java " + jvmOpts + " -jar /tmp/slave.jar";
+                        logger.println("Launching slave agent: " + launchString);
+                        final Session sess = conn.openSession();
+                        sess.execCommand(launchString);
+                        computer.setChannel(sess.getStdout(), sess.getStdin(), logger, new Channel.Listener() {
+                            @Override
+                            public void onClosed(Channel channel, IOException cause) {
+                                sess.close();
+                                conn.close();
+                            }
+                        });
+
+                        successful = true;
+                    }
+                } catch (Exception e) {
+                    LOGGER.log(Level.WARNING, e.getMessage(), e);
+                    try {
+                        instance.removeNode(slave);
+                    } catch (Exception ee) {
+                        ee.printStackTrace(logger);
+                    }
+                    e.printStackTrace(logger);
+                } finally {
+                    Date endDate = new Date();
+                    logger.println("Done setting up at: " + getUtcDate(endDate));
+                    logger.println("Done in " + TimeUnit2.MILLISECONDS.toSeconds(endDate.getTime() - startDate.getTime()) + " seconds");
+                    if (cleanupConn != null && !successful) {
+                        cleanupConn.close();
+                    }
                 }
-            });
-
-            successful = true;
-        } catch (Exception e) {
-            LOGGER.log(Level.WARNING, e.getMessage(), e);
-            try {
-                Jenkins.getInstance().removeNode(computer.getNode());
-            } catch (Exception ee) {
-                ee.printStackTrace(logger);
-            }
-            e.printStackTrace(logger);
-        } finally {
-            Date endDate = new Date();
-            logger.println("Done setting up at: " + getUtcDate(endDate));
-            logger.println("Done in " + TimeUnit2.MILLISECONDS.toSeconds(endDate.getTime() - startDate.getTime()) + " seconds");
-            if (cleanupConn != null && !successful) {
-                cleanupConn.close();
             }
         }
     }
 
     private boolean runInitScript(final Computer computer, final PrintStream logger, final Connection conn, final SCPClient scp)
             throws IOException, InterruptedException {
+        Slave slave = computer.getNode();
+        if (slave != null) {
+            String initScript = Util.fixEmptyAndTrim(slave.getInitScript());
 
-        String initScript = Util.fixEmptyAndTrim(computer.getNode().getInitScript());
+            if (initScript == null) {
+                return true;
+            }
+            if (conn.exec("test -e ~/.hudson-run-init", logger) == 0) {
+                return true;
+            }
 
-        if (initScript == null) {
-            return true;
+            logger.println("Executing init script");
+            scp.put(initScript.getBytes("UTF-8"), "init.sh", "/tmp", "0700");
+            Session session = conn.openSession();
+            session.requestDumbPTY(); // so that the remote side bundles stdout and stderr
+            session.execCommand(buildUpCommand(computer, "/tmp/init.sh"));
+
+            session.getStdin().close();    // nothing to write here
+            session.getStderr().close();   // we are not supposed to get anything from stderr
+            IOUtils.copy(session.getStdout(), logger);
+
+            int exitStatus = waitCompletion(session);
+            if (exitStatus != 0) {
+                logger.println("init script failed: exit code=" + exitStatus);
+                return false;
+            }
+            session.close();
+
+            // Needs a tty to run sudo.
+            session = conn.openSession();
+            session.requestDumbPTY(); // so that the remote side bundles stdout and stderr
+            session.execCommand(buildUpCommand(computer, "touch ~/.hudson-run-init"));
+            session.close();
         }
-        if (conn.exec("test -e ~/.hudson-run-init", logger) == 0) {
-            return true;
-        }
-
-        logger.println("Executing init script");
-        scp.put(initScript.getBytes("UTF-8"), "init.sh", "/tmp", "0700");
-        Session session = conn.openSession();
-        session.requestDumbPTY(); // so that the remote side bundles stdout and stderr
-        session.execCommand(buildUpCommand(computer, "/tmp/init.sh"));
-
-        session.getStdin().close();    // nothing to write here
-        session.getStderr().close();   // we are not supposed to get anything from stderr
-        IOUtils.copy(session.getStdout(), logger);
-
-        int exitStatus = waitCompletion(session);
-        if (exitStatus != 0) {
-            logger.println("init script failed: exit code=" + exitStatus);
-            return false;
-        }
-        session.close();
-
-        // Needs a tty to run sudo.
-        session = conn.openSession();
-        session.requestDumbPTY(); // so that the remote side bundles stdout and stderr
-        session.execCommand(buildUpCommand(computer, "touch ~/.hudson-run-init"));
-        session.close();
-
         return true;
     }
 
@@ -265,8 +275,15 @@ public class ComputerLauncher extends hudson.slaves.ComputerLauncher {
     }
 
     private Connection connectToSsh(Computer computer, PrintStream logger) throws ScalewayException {
-        ScalewayClient scaleway = ScalewayFactory.getScalewayClient(computer.getCloud().getAuthToken(), computer.getCloud().getOrgToken());
-        final long timeout = TimeUnit2.MINUTES.toMillis(computer.getCloud().getTimeoutMinutes());
+        ScalewayCloud scalewayCloud = computer.getCloud();
+        Slave slave = computer.getNode();
+        if (scalewayCloud == null || slave==null) {
+            throw new ScalewayException(new NullPointerException());
+        }
+        
+        
+        ScalewayClient scaleway = ScalewayFactory.getScalewayClient(scalewayCloud.getAuthToken(), scalewayCloud.getOrgToken());
+        final long timeout = TimeUnit2.MINUTES.toMillis(scalewayCloud.getTimeoutMinutes());
         final long startTime = System.currentTimeMillis();
         final int sleepTime = 10;
 
@@ -275,7 +292,7 @@ public class ComputerLauncher extends hudson.slaves.ComputerLauncher {
         while ((waitTime = System.currentTimeMillis() - startTime) < timeout) {
 
             // Hack to fetch this each time through the loop to get the latest information.
-            ScalewayServer server = scaleway.getServer(computer.getNode().getServerId());
+            ScalewayServer server = scaleway.getServer(slave.getServerId());
 
             if (isServerStarting(server)) {
                 logger.println("Waiting for server to enter ACTIVE state. Sleeping " + sleepTime + " seconds.");
@@ -312,7 +329,7 @@ public class ComputerLauncher extends hudson.slaves.ComputerLauncher {
 
         switch (server.getState()) {
             case STARTING:
-            case STOPPED:            
+            case STOPPED:
                 return true;
 
             case RUNNING:

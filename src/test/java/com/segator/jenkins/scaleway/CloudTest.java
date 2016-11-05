@@ -24,7 +24,7 @@
  * THE SOFTWARE.
  */
 
-package com.segator.jenkins.scaleway;
+package com.github.segator.jenkins.scaleway;
 
 import org.junit.Assert;
 import org.junit.Test;

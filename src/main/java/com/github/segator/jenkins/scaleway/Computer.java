@@ -23,22 +23,24 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+package com.github.segator.jenkins.scaleway;
 
-package com.segator.jenkins.scaleway;
-
-import com.segator.scaleway.api.ScalewayClient;
-import com.segator.scaleway.api.ScalewayFactory;
-import com.segator.scaleway.api.entity.ScalewayServer;
-import com.segator.scaleway.api.entity.exceptions.ScalewayException;
+import com.github.segator.scaleway.api.ScalewayClient;
+import com.github.segator.scaleway.api.ScalewayFactory;
+import com.github.segator.scaleway.api.entity.ScalewayServer;
+import com.github.segator.scaleway.api.entity.exceptions.ScalewayException;
 import hudson.slaves.AbstractCloudComputer;
 
 import java.util.logging.Logger;
 
 /**
  *
- * A {@link hudson.model.Computer} implementation for Scaleway. Holds a handle to an {@link Slave}.
+ * A {@link hudson.model.Computer} implementation for Scaleway. Holds a handle
+ * to an {@link Slave}.
  *
- * <p>Mainly responsible for updating the Server information via {@link Computer#updateInstanceDescription()}
+ * <p>
+ * Mainly responsible for updating the Server information via
+ * {@link Computer#updateInstanceDescription()}
  *
  * @author robert.gruendler@dubture.com
  * @author isaac.aymerich@gmail.com
@@ -60,7 +62,7 @@ public class Computer extends AbstractCloudComputer<Slave> {
     }
 
     public ScalewayServer updateInstanceDescription() throws ScalewayException {
-        ScalewayClient scaleway = ScalewayFactory.getScalewayClient(authToken,orgToken);
+        ScalewayClient scaleway = ScalewayFactory.getScalewayClient(authToken, orgToken);
         return scaleway.getServer(serverId);
     }
 
@@ -69,21 +71,38 @@ public class Computer extends AbstractCloudComputer<Slave> {
         super.onRemoved();
 
         LOGGER.info("Slave removed, deleting server " + serverId);
-        Scaleway.tryDestroyServerAsync(authToken,orgToken, serverId);
+        Scaleway.tryDestroyServerAsync(authToken, orgToken, serverId);
     }
 
-    public Cloud getCloud() {
-        return getNode().getCloud();
+    public ScalewayCloud getCloud() {
+        Slave node = getNode();
+        if (node != null) {
+            return node.getCloud();
+        }
+        return null;
     }
 
     public int getSshPort() {
-        return getNode().getSshPort();
+        Slave node = getNode();
+        if (node != null) {
+            return node.getSshPort();
+        }
+        return 22;
     }
 
     public String getRemoteAdmin() {
-        return getNode().getRemoteAdmin();
+        Slave node = getNode();
+        if (node != null) {
+            return node.getRemoteAdmin();
+        }
+        return null;
     }
+
     public long getStartTimeMillis() {
-        return getNode().getStartTimeMillis();
+        Slave node = getNode();
+        if (node != null) {
+            return node.getStartTimeMillis();
+        }
+        return 0;
     }
 }

@@ -23,7 +23,7 @@
  * THE SOFTWARE.
  */
 
-package com.segator.jenkins.scaleway;
+package com.github.segator.jenkins.scaleway;
 
 import java.util.UUID;
 import java.util.regex.Matcher;
