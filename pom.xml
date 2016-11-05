@@ -12,12 +12,12 @@
         <version>2.17</version>
     </parent>
     <groupId>com.segator.jenkins</groupId>
-    <artifactId>scaleway-plugin</artifactId>
+    <artifactId>scaleway-cloud</artifactId>
     <version>0.14-SNAPSHOT</version>
     <packaging>hpi</packaging>
-    <name>Scaleway plugin</name>
+    <name>Scaleway Cloud</name>
 
-    <url>https://wiki.jenkins-ci.org/display/JENKINS/Scaleway+Plugin</url>
+    <url>https://wiki.jenkins-ci.org/display/JENKINS/Scaleway+Cloud</url>
 
     <developers>
         <developer>
@@ -67,8 +67,8 @@
             <version>19.0</version>
         </dependency>-->
         <dependency>
-            <groupId>com.segator</groupId>
-            <artifactId>scaleway-api</artifactId>
+            <groupId>com.github.segator</groupId>
+            <artifactId>scaleway-sdk</artifactId>
             <version>0.1-SNAPSHOT</version>
             <type>jar</type>
         </dependency>
