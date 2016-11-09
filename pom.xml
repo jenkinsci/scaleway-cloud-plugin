@@ -12,7 +12,7 @@
         <version>2.17</version>
     </parent>
     <groupId>com.github.segator.jenkins</groupId>
-    <artifactId>scaleway-cloud</artifactId>
+    <artifactId>scaleway-cloud-plugin</artifactId>
     <version>0.14-SNAPSHOT</version>
     <packaging>hpi</packaging>
     <name>Scaleway Cloud</name>
