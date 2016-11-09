@@ -17,7 +17,7 @@
     <packaging>hpi</packaging>
     <name>Scaleway Cloud</name>
 
-    <url>https://wiki.jenkins-ci.org/display/JENKINS/Scaleway+Cloud</url>
+    <url>https://wiki.jenkins-ci.org/display/JENKINS/Scaleway+Cloud+Plugin</url>
 
     <developers>
         <developer>
