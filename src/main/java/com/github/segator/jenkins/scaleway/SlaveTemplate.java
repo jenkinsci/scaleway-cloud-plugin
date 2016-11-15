@@ -53,6 +53,7 @@ import org.kohsuke.stapler.QueryParameter;
 import com.github.segator.scaleway.api.entity.ScalewayServer;
 import com.github.segator.scaleway.api.ScalewayClient;
 import com.github.segator.scaleway.api.ScalewayFactory;
+import com.github.segator.scaleway.api.constants.ScalewayComputeRegion;
 import com.github.segator.scaleway.api.entity.ScalewayCommercialType;
 import com.github.segator.scaleway.api.entity.ScalewayImage;
 import com.github.segator.scaleway.api.entity.ScalewayServerAction;
@@ -193,14 +194,13 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
         return count >= instanceCap;
     }
 
-    public Slave provision(String serverName, String cloudName, String authToken, String orgToken, String privateKey, List<ScalewayServer> servers)
+    public Slave provision(String serverName, String cloudName,String orgToken,ScalewayClient scaleway, String privateKey, List<ScalewayServer> servers)
             throws IOException, Descriptor.FormException {
 
         LOGGER.log(Level.INFO, "Provisioning slave...");
 
         try {
             LOGGER.log(Level.INFO, "Starting to provision Scaleway Server using image: " + imageId + ", sizeId: " + sizeId);
-            ScalewayClient scaleway = ScalewayFactory.getScalewayClient(authToken, orgToken);
 
             if (isInstanceCapReachedLocal(cloudName) || isInstanceCapReachedRemote(servers, cloudName)) {
                 throw new AssertionError();
@@ -378,9 +378,9 @@ public class SlaveTemplate implements Describable<SlaveTemplate> {
             return model;
         }
 
-        public ListBoxModel doFillImageIdItems(@RelativePath("..") @QueryParameter String authToken, @RelativePath("..") @QueryParameter String orgToken) throws Exception {
+        public ListBoxModel doFillImageIdItems(@RelativePath("..") @QueryParameter String authToken, @RelativePath("..") @QueryParameter String orgToken,@RelativePath("..") @QueryParameter String regionId) throws Exception {
 
-            ScalewayClient scaleway = ScalewayFactory.getScalewayClient(authToken, orgToken);
+            ScalewayClient scaleway = ScalewayFactory.getScalewayClient(authToken, orgToken,ScalewayComputeRegion.valueOf(regionId));
             ListBoxModel model = new ListBoxModel();
             List<ScalewayImage> images = scaleway.getAllImages();
             for (ScalewayImage image : images) {

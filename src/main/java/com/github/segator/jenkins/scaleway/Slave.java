@@ -151,7 +151,7 @@ public class Slave extends AbstractCloudSlave {
      */
     @Override
     protected void _terminate(TaskListener listener) throws IOException, InterruptedException {
-        Scaleway.tryDestroyServerAsync(getCloud().getAuthToken(), getCloud().getOrgToken(), serverId);
+        Scaleway.tryDestroyServerAsync(getCloud().getAuthToken(), getCloud().getOrgToken(),getCloud().getScalewayClient().getRegion(), serverId);
     }
 
     public long getStartTimeMillis() {

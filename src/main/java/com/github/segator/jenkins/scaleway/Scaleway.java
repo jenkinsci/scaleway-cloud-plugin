@@ -22,11 +22,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
 package com.github.segator.jenkins.scaleway;
 
 import com.github.segator.scaleway.api.ScalewayClient;
 import com.github.segator.scaleway.api.ScalewayFactory;
+import com.github.segator.scaleway.api.constants.ScalewayComputeRegion;
 import com.github.segator.scaleway.api.entity.ScalewayServer;
 import com.github.segator.scaleway.api.entity.ScalewayServerAction;
 import java.util.*;
@@ -34,8 +34,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Various utility methods that make it easier to obtain full lists of properties from Scaleway. Some API
- * calls require page number, since the results are paginated, so these utilities will exhaust all the pages and
+ * Various utility methods that make it easier to obtain full lists of
+ * properties from Scaleway. Some API calls require page number, since the
+ * results are paginated, so these utilities will exhaust all the pages and
  * return a single result set.
  *
  * @author Rory Hunter (rory.hunter@blackpepper.co.uk)
@@ -49,16 +50,17 @@ public final class Scaleway {
 
     private static final Logger LOGGER = Logger.getLogger(Scaleway.class.getName());
 
-
-
     private static class DestroyInfo {
+
         public final String authToken;
         public final String orgToken;
+        public final ScalewayComputeRegion regionId;
         public final String serverId;
 
-        public DestroyInfo(String authToken,String orgToken, String serverId) {
+        public DestroyInfo(String authToken, String orgToken, ScalewayComputeRegion regionId, String serverId) {
             this.authToken = authToken;
             this.orgToken = orgToken;
+            this.regionId = regionId;
             this.serverId = serverId;
         }
     }
@@ -85,14 +87,14 @@ public final class Scaleway {
 
                         if (di.authToken != previousAuthToken) {
                             previousAuthToken = di.authToken;
-                            client = ScalewayFactory.getScalewayClient(di.authToken,di.orgToken);
+                            client = ScalewayFactory.getScalewayClient(di.authToken, di.orgToken,di.regionId);
                             // new auth token -- new list of servers
                             servers = null;
                         }
 
                         try {
                             LOGGER.info("Trying to destroy server " + di.serverId);
-                            client.executeServerAction(di.serverId,ScalewayServerAction.TERMINATE);
+                            client.executeServerAction(di.serverId, ScalewayServerAction.TERMINATE);
                             LOGGER.info("Server " + di.serverId + " is destroyed");
                             it.remove();
                         } catch (Exception e) {
@@ -150,11 +152,11 @@ public final class Scaleway {
         }
     });
 
-    static void tryDestroyServerAsync(final String authToken,final String orgToken, final String serverId) {
+    static void tryDestroyServerAsync(final String authToken, final String orgToken,final ScalewayComputeRegion regionId, final String serverId) {
         synchronized (toBeDestroyedServers) {
             LOGGER.info("Adding server to destroy " + serverId);
 
-            toBeDestroyedServers.add(new DestroyInfo(authToken,orgToken, serverId));
+            toBeDestroyedServers.add(new DestroyInfo(authToken, orgToken,regionId, serverId));
 
             // sort by authToken
             Collections.sort(toBeDestroyedServers, new Comparator<DestroyInfo>() {

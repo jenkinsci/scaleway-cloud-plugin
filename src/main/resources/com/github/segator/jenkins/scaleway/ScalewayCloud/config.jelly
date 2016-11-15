@@ -31,7 +31,9 @@
     <f:entry title="Unique name" field="name">
         <f:textbox/>
     </f:entry>
-
+    <f:entry title="Compute Region" field="regionId">
+        <f:select />
+    </f:entry>
     <f:entry title="Auth token" >
         <f:password field="authToken" />
     </f:entry>
@@ -51,11 +53,11 @@
         <f:textbox default="5"/>
     </f:entry>
 
-    <f:validateButton title="Test connection" progress="Testing API connectivity..." method="testConnection" with="authToken,orgToken"/>
+    <f:validateButton title="Test connection" progress="Testing API connectivity..." method="testConnection" with="authToken,orgToken,regionId"/>
 
     <f:entry title="Server Definitions" description="List of Servers Definitions which can be launched as slaves">
         <f:repeatable field="templates">
-            <st:include page="/com/segator/jenkins/scaleway/SlaveTemplate/config.jelly" class="com.github.segator.jenkins.scaleway.SlaveTemplate$DescriptorImpl"/>
+            <st:include page="/com/github/segator/jenkins/scaleway/SlaveTemplate/config.jelly" class="com.github.segator.jenkins.scaleway.SlaveTemplate$DescriptorImpl"/>
         </f:repeatable>
     </f:entry>
 

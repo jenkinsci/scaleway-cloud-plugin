@@ -55,6 +55,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static java.lang.String.format;
+import static java.lang.String.format;
 
 /**
  * The {@link ScalewayComputerLauncher} is responsible for:
@@ -282,7 +283,7 @@ public class ScalewayComputerLauncher extends hudson.slaves.ComputerLauncher {
         }
         
         
-        ScalewayClient scaleway = ScalewayFactory.getScalewayClient(scalewayCloud.getAuthToken(), scalewayCloud.getOrgToken());
+        ScalewayClient scaleway = ScalewayFactory.getScalewayClient(scalewayCloud.getAuthToken(), scalewayCloud.getOrgToken(),scalewayCloud.getScalewayClient().getRegion());
         final long timeout = TimeUnit2.MINUTES.toMillis(scalewayCloud.getTimeoutMinutes());
         final long startTime = System.currentTimeMillis();
         final int sleepTime = 10;

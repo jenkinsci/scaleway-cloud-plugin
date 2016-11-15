@@ -28,6 +28,8 @@ package com.github.segator.jenkins.scaleway;
 import com.google.common.base.Strings;
 import com.github.segator.scaleway.api.ScalewayClient;
 import com.github.segator.scaleway.api.ScalewayFactory;
+import com.github.segator.scaleway.api.constants.ScalewayComputeRegion;
+import com.github.segator.scaleway.api.entity.ScalewayCommercialType;
 import com.github.segator.scaleway.api.entity.ScalewayServer;
 
 import hudson.Extension;
@@ -37,6 +39,7 @@ import hudson.model.Label;
 import hudson.model.Node;
 import hudson.slaves.NodeProvisioner;
 import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -71,7 +74,7 @@ public class ScalewayCloud extends hudson.slaves.Cloud {
     /**
      * The Scaleway API auth token
      *
-     * @see "https://developers.scaleway.com/documentation/v2/#authentication"
+     * @see "https://developers.scalewayClient.com/documentation/v2/#authentication"
      */
     private final String authToken;
     private final String orgToken;
@@ -92,7 +95,7 @@ public class ScalewayCloud extends hudson.slaves.Cloud {
 
     private static final Logger LOGGER = Logger.getLogger(ScalewayCloud.class.getName());
 
-    private final ScalewayClient scaleway;
+    private final ScalewayClient scalewayClient;
 
     /**
      * Sometimes nodes can be provisioned very fast (or in parallel), leading to
@@ -115,6 +118,7 @@ public class ScalewayCloud extends hudson.slaves.Cloud {
      * @param authToken A Scaleway API authentication token, generated on their
      * website.
      * @param orgToken A Scaleway Organzation Token
+     * @param regionId Compute Region Id
      * @param privateKey An RSA private key in text format
      * @param instanceCap the maximum number of instances that can be started
      * @param timeoutMinutes timeout in minutes
@@ -122,6 +126,7 @@ public class ScalewayCloud extends hudson.slaves.Cloud {
      */
     @DataBoundConstructor
     public ScalewayCloud(String name,
+            String regionId,
             String authToken,
             String orgToken,
             String privateKey,
@@ -143,7 +148,7 @@ public class ScalewayCloud extends hudson.slaves.Cloud {
         } else {
             this.templates = templates;
         }
-        scaleway = ScalewayFactory.getScalewayClient(authToken, orgToken);
+        scalewayClient = ScalewayFactory.getScalewayClient(authToken, orgToken, ScalewayComputeRegion.valueOf(regionId));
 
         LOGGER.info("Creating Scaleway cloud with " + this.templates.size() + " templates");
     }
@@ -220,7 +225,7 @@ public class ScalewayCloud extends hudson.slaves.Cloud {
             try {
                 while (excessWorkload > 0) {
 
-                    List<ScalewayServer> servers = scaleway.getAllServers();
+                    List<ScalewayServer> servers = scalewayClient.getAllServers();
 
                     if (isInstanceCapReachedLocal() || isInstanceCapReachedRemote(servers)) {
                         LOGGER.log(Level.INFO, "Instance cap reached, not provisioning.");
@@ -238,13 +243,13 @@ public class ScalewayCloud extends hudson.slaves.Cloud {
                         public Node call() throws Exception {
                             Slave slave;
                             synchronized (provisionSynchronizor) {
-                                List<ScalewayServer> servers = scaleway.getAllServers();
+                                List<ScalewayServer> servers = scalewayClient.getAllServers();
 
                                 if (isInstanceCapReachedLocal() || isInstanceCapReachedRemote(servers)) {
                                     LOGGER.log(Level.INFO, "Instance cap reached, not provisioning.");
                                     return null;
                                 }
-                                slave = template.provision(serverName, name, authToken, orgToken, privateKey, servers);
+                                slave = template.provision(serverName, name, orgToken, scalewayClient, privateKey, servers);
                             }
                             Jenkins instance = Jenkins.getInstance();
                             if (instance != null) {
@@ -302,7 +307,7 @@ public class ScalewayCloud extends hudson.slaves.Cloud {
                 continue;
             }
             if (t.getLabelSet() != null) {
-                if ((label == null && t.getLabelSet().isEmpty()) || label!=null && label.matches(t.getLabelSet())) {
+                if ((label == null && t.getLabelSet().isEmpty()) || label != null && label.matches(t.getLabelSet())) {
                     matchingTemplates.add(t);
                 }
             }
@@ -351,6 +356,19 @@ public class ScalewayCloud extends hudson.slaves.Cloud {
         return authToken;
     }
 
+    public String getOrgToken() {
+        return orgToken;
+    }
+
+    public ScalewayClient getScalewayClient() {
+        return scalewayClient;
+    }
+    
+    
+    public String getRegionId() {
+        return scalewayClient.getRegion().toString();
+    }
+
     public String getPrivateKey() {
         return privateKey;
     }
@@ -374,13 +392,15 @@ public class ScalewayCloud extends hudson.slaves.Cloud {
             load();
         }
 
+        @Override
         public String getDisplayName() {
             return "Scaleway";
         }
 
-        public FormValidation doTestConnection(@QueryParameter("authToken") final String authToken, @QueryParameter("orgToken") final String orgToken) {
+        public FormValidation doTestConnection(@QueryParameter("authToken") final String authToken, @QueryParameter("orgToken") final String orgToken,
+                @QueryParameter("regionId") final String regionId) {
             try {
-                ScalewayClient client = ScalewayFactory.getScalewayClient(authToken, authToken);
+                ScalewayClient client = ScalewayFactory.getScalewayClient(authToken, authToken,ScalewayComputeRegion.valueOf(regionId));
                 client.getAllOrganizations();
                 return FormValidation.ok("Scaleway API request succeeded.");
             } catch (Exception e) {
@@ -447,9 +467,16 @@ public class ScalewayCloud extends hudson.slaves.Cloud {
                 return FormValidation.ok();
             }
         }
-    }
 
-    public String getOrgToken() {
-        return orgToken;
+        public ListBoxModel doFillRegionIdItems() {
+
+            ListBoxModel model = new ListBoxModel();
+
+            for (ScalewayComputeRegion computeRegion : ScalewayComputeRegion.values()) {
+                model.add(computeRegion.toString(), computeRegion.toString());
+            }
+
+            return model;
+        }
     }
 }

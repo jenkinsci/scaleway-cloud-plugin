@@ -27,6 +27,7 @@ package com.github.segator.jenkins.scaleway;
 
 import com.github.segator.scaleway.api.ScalewayClient;
 import com.github.segator.scaleway.api.ScalewayFactory;
+import com.github.segator.scaleway.api.constants.ScalewayComputeRegion;
 import com.github.segator.scaleway.api.entity.ScalewayServer;
 import com.github.segator.scaleway.api.entity.exceptions.ScalewayException;
 import hudson.slaves.AbstractCloudComputer;
@@ -51,6 +52,7 @@ public class Computer extends AbstractCloudComputer<Slave> {
 
     private final String authToken;
     private final String orgToken;
+    private final ScalewayComputeRegion regionId;
 
     private String serverId;
 
@@ -59,10 +61,11 @@ public class Computer extends AbstractCloudComputer<Slave> {
         serverId = slave.getServerId();
         authToken = slave.getCloud().getAuthToken();
         orgToken = slave.getCloud().getOrgToken();
+        regionId = slave.getCloud().getScalewayClient().getRegion();
     }
 
     public ScalewayServer updateInstanceDescription() throws ScalewayException {
-        ScalewayClient scaleway = ScalewayFactory.getScalewayClient(authToken, orgToken);
+        ScalewayClient scaleway = ScalewayFactory.getScalewayClient(authToken, orgToken,regionId);
         return scaleway.getServer(serverId);
     }
 
@@ -71,7 +74,7 @@ public class Computer extends AbstractCloudComputer<Slave> {
         super.onRemoved();
 
         LOGGER.info("Slave removed, deleting server " + serverId);
-        Scaleway.tryDestroyServerAsync(authToken, orgToken, serverId);
+        Scaleway.tryDestroyServerAsync(authToken, orgToken,regionId, serverId);
     }
 
     public ScalewayCloud getCloud() {
