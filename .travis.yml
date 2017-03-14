@@ -5,3 +5,10 @@ cache:
   - "$HOME/.m2"
 after_success:
 - bash <(curl -s https://codecov.io/bash)
+deploy:
+  provider: releases
+  api_key: "3ccd7c691e3fa3d49df65819d19a7f6c52739e68"
+  file: "/home/travis/build/jenkinsci/scaleway-cloud-plugin/target/scaleway-cloud.hpi"
+  skip_cleanup: true
+  on:
+    tags: true
